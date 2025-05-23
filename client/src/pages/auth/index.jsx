@@ -50,7 +50,6 @@ const Auth = () => {
     if (validateLogin()) {
       try {
         const response = await apiClient.post(LOGIN_ROUTE, { email, password });
-        toast.success("Login successful.");
         console.log(response);
 
         if (response.data.user.id) {
@@ -70,17 +69,15 @@ const Auth = () => {
 
   const handleSignup = async () => {
     if (validateSignup()) {
-      toast.success("User created successfully.");
       const response = await apiClient.post(SIGNUP_ROUTE, { email, password });
       console.log(response);
-      console.log("Success");
-    }
-    if (response.status === 201) {
-      setUserInfo(response.data.user);
-      navigate("/profile");
+      if (response.status === 201) {
+        setUserInfo(response.data.user);
+        navigate("/profile");
+      }
     }
   };
-
+  
   return (
     <div className="h-[100vh] w-[100vw] items-center justify-center flex">
       <div
