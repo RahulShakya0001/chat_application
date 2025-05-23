@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import {genSalt} from "bcrypt";
+import { genSalt, hash } from "bcrypt";  // <-- add hash here
 
 const UserSchema = new mongoose.Schema({
     email: {
@@ -35,7 +35,7 @@ const UserSchema = new mongoose.Schema({
 
 UserSchema.pre("save", async function(next) {
     const salt = await genSalt();
-    this.password = await hash(this.password, salt);
+    this.password = await hash(this.password, salt);  // now hash is defined
     next();
 });
 

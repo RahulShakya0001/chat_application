@@ -2,7 +2,7 @@ import axios from "axios";
 import { HOST } from "@/utils/constants.js";
 
 const apiClient = axios.create({
-    baseURL: HOST,
+  baseURL: HOST,
+  withCredentials: true
 });
-
 export { apiClient };
