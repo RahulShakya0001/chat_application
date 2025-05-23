@@ -4,11 +4,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState } from "react";
+import { toast } from "sonner";
+import { apiClient } from "@/lib/api-client.js";
+import { SIGNUP_ROUTE } from "@/utils/constants.js";
 
 const Auth = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+
+    const validateSignup = () => {
+        if(!email.length) {
+            toast.error("Email is required.");
+            return false;
+        }
+        if(!password.length){
+            toast.error("Password is required.");
+            return false;
+        }
+        if(password !== confirmPassword){
+            toast.error("Password and Confirm password should match.");
+            return false;
+        }
+
+        return true;
+    }
 
     const handleLogin = async () => {
         // Login logic
@@ -16,6 +36,12 @@ const Auth = () => {
 
     const handleSignup = async () => {
         // Signup logic
+        if(validateSignup()){
+            toast.success("Signup successful!");
+            const response = await apiClient.post(SIGNUP_ROUTE, { email, password });
+            console.log(response);
+        }
+
     };
 
     return (
