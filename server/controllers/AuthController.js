@@ -88,7 +88,7 @@ const getUserInfo = async (request, response, next) => {
     try {
         const userData = await User.findById(request.userId);
         if (!userData) {
-            return response.status(404).send("User not found.");
+            return response.status(404).send("User with the given id not found.");
         }
 
         return response.status(200).json({
@@ -104,8 +104,9 @@ const getUserInfo = async (request, response, next) => {
         console.log("Get User Info error:", error);
         return response.status(500).send("Internal Server Error");
     }
-
 };
+
+
 export {
     signup,
     login,

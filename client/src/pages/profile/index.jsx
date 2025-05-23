@@ -4,7 +4,9 @@ const Profile = () => {
     const {userInfo} = useAppStore()
     return (
         <div>Profile
-            Email: {userInfo.userId}
+            Email: {userInfo.email}
+            <br />
+            Id: {userInfo.id}
         </div>
     )
 }
