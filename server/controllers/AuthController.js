@@ -1,6 +1,10 @@
 import User from "../models/UserModel.js";
 import jwt from "jsonwebtoken";
 import { compare } from "bcrypt";
+import { renameSync, unlinkSync } from "fs"
+import path from 'path';
+import fs from 'fs';
+
 
 const maxAge = 3 * 60 * 60; // in seconds, not milliseconds
 
@@ -106,53 +110,110 @@ const getUserInfo = async (request, response, next) => {
     }
 };
 
-const updateProfile = async (request, response, next) => {
-  try {
-    const { userId } = request;
-    const { firstName, lastName, color } = request.body;
+const addProfileImage = async (request, response, next) => {
+    try {
+        const { userId } = request;
+        const { firstName, lastName, color } = request.body;
 
-    if (!userId) {
-      return response.status(401).send("Unauthorized: Missing user ID");
+        if (!userId) {
+            return response.status(401).send("Unauthorized: Missing user ID");
+        }
+        console.log("Received color:", color);
+
+        if (!firstName || !lastName || typeof color !== "number") {
+            return response.status(400).send("First Name, Last Name, and color are required.");
+        }
+
+        const userData = await User.findByIdAndUpdate(
+            userId,
+            {
+                firstName,
+                lastName,
+                color,
+                profileSetup: true
+            },
+            {
+                new: true,
+                runValidators: true
+            }
+        );
+
+        if (!userData) {
+            return response.status(404).send("User not found.");
+        }
+
+        return response.status(200).json({
+            id: userData.id,
+            email: userData.email,
+            profileSetup: userData.profileSetup,
+            firstName: userData.firstName,
+            lastName: userData.lastName,
+            image: userData.image,
+            color: userData.color,
+        });
+    } catch (error) {
+        console.error("Update Profile Error:", error);
+        return response.status(500).send("Internal Server Error");
     }
-    console.log("Received color:", color);
-
-    if (!firstName || !lastName || typeof color !== "number") {
-      return response.status(400).send("First Name, Last Name, and color are required.");
-    }
-
-    const userData = await User.findByIdAndUpdate(
-      userId,
-      {
-        firstName,
-        lastName,
-        color,
-        profileSetup: true
-      },
-      {
-        new: true,
-        runValidators: true
-      }
-    );
-
-    if (!userData) {
-      return response.status(404).send("User not found.");
-    }
-
-    return response.status(200).json({
-      id: userData.id,
-      email: userData.email,
-      profileSetup: userData.profileSetup,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      image: userData.image,
-      color: userData.color,
-    });
-  } catch (error) {
-    console.error("Update Profile Error:", error);
-    return response.status(500).send("Internal Server Error");
-  }
 };
 
+const updateProfile = async (request, response) => {
+    try {
+        if (!request.file) {
+            return response.status(400).send("File is required.");
+        }
+
+        const userId = request.userId;
+        if (!userId) {
+            return response.status(401).send("Unauthorized: Missing user ID");
+        }
+
+        const timestamp = Date.now();
+        const extension = path.extname(request.file.originalname);
+        const newFileName = `${timestamp}${extension}`;
+        const newFilePath = path.join("uploads/profiles", newFileName);
+
+        // Rename the uploaded temp file
+        fs.renameSync(request.file.path, newFilePath);
+
+        // Update the user's image field
+        const updatedUser = await User.findOneAndUpdate(
+            { _id: userId },
+            { image: `/uploads/profile/${newFileName}` }, // relative public URL
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedUser) {
+            return response.status(404).send("User not found.");
+        }
+
+        return response.status(200).json({
+            image: updatedUser.image,
+        });
+    } catch (error) {
+        console.error("Upload Profile Image Error:", error);
+        return response.status(500).send("Internal Server Error");
+    }
+};
+
+const removeProfileImage = async (request, response, next) => {
+    try {
+        if (!request.file) {
+            return response.status(400).send("File is required.");
+        }
+        const data = Date.now();
+        let fileName = "uploads/profiles" + date + request.file.originalName;
+        renameSync(request.file.path, fileName)
+        const updatedUser = await User.findOneAndUpdate(request.userId, { image: fileName }, { new: true, runValidators: true })
+
+        return response.status(200).json({
+            image: updatedUser.image,
+        });
+    } catch (error) {
+        console.error("Update Profile Error:", error);
+        return response.status(500).send("Internal Server Error");
+    }
+};
 
 
 
@@ -161,4 +222,6 @@ export {
     login,
     getUserInfo,
     updateProfile,
+    addProfileImage,
+    removeProfileImage
 };

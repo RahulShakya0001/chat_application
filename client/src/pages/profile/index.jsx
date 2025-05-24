@@ -115,7 +115,7 @@ const Profile = () => {
 
     const reader = new FileReader();
     reader.onload = () => {
-      setImage(reader.result); // base64 string
+      setImage(reader.result); 
     };
     reader.readAsDataURL(file);
   } catch (error) {
