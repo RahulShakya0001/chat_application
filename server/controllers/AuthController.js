@@ -74,7 +74,7 @@ const login = async (request, response, next) => {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 image: user.image,
-                colors: user.colors,
+                color: user.color,
             }
         });
 
@@ -98,7 +98,7 @@ const getUserInfo = async (request, response, next) => {
             firstName: userData.firstName,
             lastName: userData.lastName,
             image: userData.image,
-            colors: userData.colors,
+            color: userData.color,
         });
     } catch (error) {
         console.log("Get User Info error:", error);
@@ -106,9 +106,59 @@ const getUserInfo = async (request, response, next) => {
     }
 };
 
+const updateProfile = async (request, response, next) => {
+  try {
+    const { userId } = request;
+    const { firstName, lastName, color } = request.body;
+
+    if (!userId) {
+      return response.status(401).send("Unauthorized: Missing user ID");
+    }
+    console.log("Received color:", color);
+
+    if (!firstName || !lastName || typeof color !== "number") {
+      return response.status(400).send("First Name, Last Name, and color are required.");
+    }
+
+    const userData = await User.findByIdAndUpdate(
+      userId,
+      {
+        firstName,
+        lastName,
+        color,
+        profileSetup: true
+      },
+      {
+        new: true,
+        runValidators: true
+      }
+    );
+
+    if (!userData) {
+      return response.status(404).send("User not found.");
+    }
+
+    return response.status(200).json({
+      id: userData.id,
+      email: userData.email,
+      profileSetup: userData.profileSetup,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      image: userData.image,
+      color: userData.color,
+    });
+  } catch (error) {
+    console.error("Update Profile Error:", error);
+    return response.status(500).send("Internal Server Error");
+  }
+};
+
+
+
 
 export {
     signup,
     login,
     getUserInfo,
+    updateProfile,
 };
