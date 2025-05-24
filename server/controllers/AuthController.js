@@ -3,7 +3,6 @@ import jwt from "jsonwebtoken";
 import { compare } from "bcrypt";
 import { renameSync, unlinkSync } from "fs"
 import path from 'path';
-import fs from 'fs';
 
 
 const maxAge = 3 * 60 * 60; // in seconds, not milliseconds
@@ -110,7 +109,7 @@ const getUserInfo = async (request, response, next) => {
     }
 };
 
-const addProfileImage = async (request, response, next) => {
+const updateProfile = async (request, response, next) => {
     try {
         const { userId } = request;
         const { firstName, lastName, color } = request.body;
@@ -157,7 +156,7 @@ const addProfileImage = async (request, response, next) => {
     }
 };
 
-const updateProfile = async (request, response) => {
+const addProfileImage = async (request, response) => {
     try {
         if (!request.file) {
             return response.status(400).send("File is required.");
@@ -168,47 +167,55 @@ const updateProfile = async (request, response) => {
             return response.status(401).send("Unauthorized: Missing user ID");
         }
 
-        const timestamp = Date.now();
-        const extension = path.extname(request.file.originalname);
-        const newFileName = `${timestamp}${extension}`;
-        const newFilePath = path.join("uploads/profiles", newFileName);
+        // const timestamp = Date.now();
+        // const extension = path.extname(request.file.originalname);
+        // const newFileName = `${timestamp}${extension}`;
+        // const newFilePath = path.join("uploads/profiles", newFileName);
+        const date = Date.now();
+        let fileName = "uploads/profiles/" + date + request.file.originalname;
+        renameSync(request.file.path, fileName);
+        const updatedUser = await User.findByIdAndUpdate(request.userId, {image:fileName }, {new: true, runValidators: true});
+
 
         // Rename the uploaded temp file
-        fs.renameSync(request.file.path, newFilePath);
+        // fs.renameSync(request.file.path, newFilePath);
 
         // Update the user's image field
-        const updatedUser = await User.findOneAndUpdate(
-            { _id: userId },
-            { image: `/uploads/profile/${newFileName}` }, // relative public URL
-            { new: true, runValidators: true }
-        );
+        // const updatedUser = await User.findOneAndUpdate(
+        //     { _id: userId },
+        //     { image: `/uploads/profile/${newFileName}` }, 
+        //     { new: true, runValidators: true }
+        // );
 
-        if (!updatedUser) {
-            return response.status(404).send("User not found.");
-        }
+        // if (!updatedUser) {
+        //     return response.status(404).send("User not found.");
+        // }
 
         return response.status(200).json({
             image: updatedUser.image,
         });
     } catch (error) {
-        console.error("Upload Profile Image Error:", error);
+        console.error("Upload Profile Image Error el :", error);
         return response.status(500).send("Internal Server Error");
     }
 };
 
 const removeProfileImage = async (request, response, next) => {
     try {
-        if (!request.file) {
-            return response.status(400).send("File is required.");
-        }
-        const data = Date.now();
-        let fileName = "uploads/profiles" + date + request.file.originalName;
-        renameSync(request.file.path, fileName)
-        const updatedUser = await User.findOneAndUpdate(request.userId, { image: fileName }, { new: true, runValidators: true })
+        const userId = request.userId;
+        const user = await User.findById(userId);
 
-        return response.status(200).json({
-            image: updatedUser.image,
-        });
+        if(!user){
+            return response.status(404).send("User Not Found.");
+        }
+        
+        if(user.image){
+            unlinkSync(user.image);
+        }
+      
+        user.image = null
+        await user.save();
+        return response.status(200).send("Profile Image removed successfully.");
     } catch (error) {
         console.error("Update Profile Error:", error);
         return response.status(500).send("Internal Server Error");

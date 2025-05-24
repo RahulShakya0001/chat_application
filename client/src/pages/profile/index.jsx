@@ -11,7 +11,10 @@ import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
 import {
   ADD_PROFILE_IMAGE_ROUTE,
+  HOST,
   UPDATE_PROFILE_ROUTE,
+  REMOVE_PROFILE_IMAGE_ROUTE,
+
 } from "@/utils/constants";
 
 const Profile = () => {
@@ -26,19 +29,21 @@ const Profile = () => {
 
   useEffect(() => {
     if (userInfo.profileSetup) {
-      console.log(userInfo.color);
       setFirstName(userInfo.firstName || "");
       setLastName(userInfo.lastName || "");
-      setSelectedColor(userInfo.color ?? 0); // ✅ Ensures fallback
+      setSelectedColor(userInfo.color ?? 0);
+    }
+    if (userInfo.image) {
+      const fixedPath = userInfo.image.replace(/\\/g, "/"); 
+      setImage(`${HOST}${fixedPath}`); 
     }
   }, [userInfo]);
 
   useEffect(() => {
     if (userInfo.profileSetup) {
-      console.log(userInfo);
       setFirstName(userInfo.firstName || "");
       setLastName(userInfo.lastName || "");
-      setSelectedColor(userInfo.color ?? 0); // ✅ Ensures fallback
+      setSelectedColor(userInfo.color ?? 0);
     }
   }, []);
 
@@ -92,39 +97,51 @@ const Profile = () => {
   };
 
   const handleImageChange = async (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
+    const file = event.target.files[0];
+    if (!file) return;
 
-  try {
-    // 1. Upload file to server
-    const formData = new FormData();
-    formData.append("profile-image", file);
+    try {
+      // 1. Upload file to server
+      const formData = new FormData();
+      formData.append("profile-image", file);
 
-    const response = await apiClient.post(ADD_PROFILE_IMAGE_ROUTE, formData, {
-      withCredentials: true,
-    });
+      const response = await apiClient.post(ADD_PROFILE_IMAGE_ROUTE, formData, {
+        withCredentials: true,
+      });
 
-    // 2. Update user image if upload succeeded
-    if (response.status === 200 && response.data.image) {
-      setUserInfo((prev) => ({
-        ...prev,
-        image: response.data.image,
-      }));
-      toast.success("Image Updated Successfully");
+      // 2. Update user image if upload succeeded
+      if (response.status === 200 && response.data.image) {
+        setUserInfo((prev) => ({
+          ...prev,
+          image: response.data.image,
+        }));
+        toast.success("Image Updated Successfully");
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        setImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error("Image upload failed:", error);
+      toast.error("Image upload failed. Please try again.");
     }
+  };
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setImage(reader.result); 
-    };
-    reader.readAsDataURL(file);
-  } catch (error) {
-    console.error("Image upload failed:", error);
-    toast.error("Image upload failed. Please try again.");
-  }
-};
-
-  const handleDeleteImage = async () => {};
+  const handleDeleteImage = async () => {
+	try {
+		const response = await apiClient.delete(REMOVE_PROFILE_IMAGE_ROUTE, {withCredentials: true});
+		if(response.status === 200 ){
+			setUserInfo({...userInfo, image: null});
+			toast.success("Image removed successfully.");
+			setImage(null)
+		}
+	} catch (error) {
+		console.log(error)
+		
+	}
+  };
   return (
     <div className="bg-[#1b1c24] h-[100vh] flex items-center justify-center flex-col gap-10">
       <div className="flex flex-col gap-10 w-[80vw] md:w-max">
@@ -219,9 +236,7 @@ const Profile = () => {
               <div
                 key={index}
                 className={`h-8 w-8 rounded-full cursor-pointer transition-all ${color} ${
-                  selectedColor === index
-                    ? "outline outline-4 outline-white"
-                    : ""
+                  selectedColor === index ? "outline-4 outline-white" : ""
                 }`}
                 onClick={() => setSelectedColor(index)}
                 title={`Color ${index}`}
