@@ -30,6 +30,8 @@ const Auth = () => {
   };
 
   const validateSignup = () => {
+    console.log(email)
+    console.log(password)
     if (!email.length) {
       toast.error("Email is required.");
       return false;
