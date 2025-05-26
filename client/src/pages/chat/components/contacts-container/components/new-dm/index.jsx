@@ -30,14 +30,12 @@ function NewDM() {
 
   const searchContacts = async (searchTerm) => {
     try {
-      console.log(searchedContacts)
       if (searchTerm.length > 0) {
         const response = await apiClient.post(
           SEARCH_CONTACTS_ROUTES,
           { searchTerm },
           { withCredentials: true }
         );
-        console.log(response.data.contacts)
         
         if (response.status === 200 && response.data.contacts) {
           setSearchedContacts(response.data.contacts);
@@ -130,7 +128,7 @@ function NewDM() {
             </div>
           </ScrollArea>}
           {searchedContacts.length <= 0 && (
-            <div className="flex-1 md:bg-[#1c1d25] md:flex flex-col justify-center items-center duration-1000 transition-all">
+            <div className="flex-1 md:flex flex-col items-center duration-1000 transition-all">
               <Lottie
                 isClickToPauseDisabled={true}
                 height={100}
