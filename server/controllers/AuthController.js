@@ -54,13 +54,15 @@ const login = async (request, response, next) => {
 
         const user = await User.findOne({ email });
         if (!user) {
-            return response.status(404).send("User with the given email not found.")
+            return response.status(404).send("User with the given email not found.");
         }
+
         const auth = await compare(password, user.password);
         if (!auth) {
             return response.status(401).send("Invalid Password");
         }
-        const token = createToken(email, user.id);
+
+        const token = createToken(email, user._id.toString()); // or user.id
 
         response.cookie("jwt", token, {
             maxAge: maxAge * 1000,
@@ -69,9 +71,9 @@ const login = async (request, response, next) => {
             sameSite: "None",
         });
 
-        return response.status(201).json({
+        return response.status(200).json({
             user: {
-                id: user.id,
+                id: user._id.toString(),
                 email: user.email,
                 profileSetup: user.profileSetup,
                 firstName: user.firstName,
@@ -82,10 +84,11 @@ const login = async (request, response, next) => {
         });
 
     } catch (error) {
-        console.error("Signup error:", error);
+        console.error("Login error:", error);
         return response.status(500).send("Internal Server Error");
     }
 };
+
 
 const getUserInfo = async (request, response, next) => {
     try {
@@ -167,29 +170,11 @@ const addProfileImage = async (request, response) => {
             return response.status(401).send("Unauthorized: Missing user ID");
         }
 
-        // const timestamp = Date.now();
-        // const extension = path.extname(request.file.originalname);
-        // const newFileName = `${timestamp}${extension}`;
-        // const newFilePath = path.join("uploads/profiles", newFileName);
         const date = Date.now();
         let fileName = "uploads/profiles/" + date + request.file.originalname;
         renameSync(request.file.path, fileName);
-        const updatedUser = await User.findByIdAndUpdate(request.userId, {image:fileName }, {new: true, runValidators: true});
+        const updatedUser = await User.findByIdAndUpdate(request.userId, { image: fileName }, { new: true, runValidators: true });
 
-
-        // Rename the uploaded temp file
-        // fs.renameSync(request.file.path, newFilePath);
-
-        // Update the user's image field
-        // const updatedUser = await User.findOneAndUpdate(
-        //     { _id: userId },
-        //     { image: `/uploads/profile/${newFileName}` }, 
-        //     { new: true, runValidators: true }
-        // );
-
-        // if (!updatedUser) {
-        //     return response.status(404).send("User not found.");
-        // }
 
         return response.status(200).json({
             image: updatedUser.image,
@@ -205,20 +190,29 @@ const removeProfileImage = async (request, response, next) => {
         const userId = request.userId;
         const user = await User.findById(userId);
 
-        if(!user){
+        if (!user) {
             return response.status(404).send("User Not Found.");
         }
-        
-        if(user.image){
+
+        if (user.image) {
             unlinkSync(user.image);
         }
-      
+
         user.image = null
         await user.save();
         return response.status(200).send("Profile Image removed successfully.");
     } catch (error) {
         console.error("Update Profile Error:", error);
         return response.status(500).send("Internal Server Error");
+    }
+};
+const logout = async (request, response, next) => {
+    try {
+        response.cookie("jwt", "", { maxAge: 1, secure: true, sameSite: "None" })
+        return response.status(200).send("Logout successfully.");
+    } catch (error) {
+        console.error("Update Profile Error:", error);
+        return response.status(500).send("Logout Internal Server Error");
     }
 };
 
@@ -230,5 +224,6 @@ export {
     getUserInfo,
     updateProfile,
     addProfileImage,
-    removeProfileImage
+    removeProfileImage,
+    logout
 };

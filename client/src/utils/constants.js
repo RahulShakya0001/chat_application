@@ -6,6 +6,10 @@ const GET_USER_INFO = `${AUTH_ROUTES}/user-info`;
 const UPDATE_PROFILE_ROUTE = `${AUTH_ROUTES}/update-profile`;
 const ADD_PROFILE_IMAGE_ROUTE = `${AUTH_ROUTES}/add-profile-image`;
 const REMOVE_PROFILE_IMAGE_ROUTE = `${AUTH_ROUTES}/remove-profile-image`;
+const LOGOUT_ROUTE = `${AUTH_ROUTES}/logout`;   
+
+export const CONTACTS_ROUTES = 'api/contacts';  
+export const SEARCH_CONTACTS_ROUTES = `${CONTACTS_ROUTES}/search`;
 
 export { 
     HOST, 
@@ -14,6 +18,7 @@ export {
     GET_USER_INFO, 
     UPDATE_PROFILE_ROUTE, 
     ADD_PROFILE_IMAGE_ROUTE,
-    REMOVE_PROFILE_IMAGE_ROUTE    
+    REMOVE_PROFILE_IMAGE_ROUTE,
+    LOGOUT_ROUTE 
 };
 

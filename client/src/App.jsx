@@ -36,7 +36,6 @@ function App() {
         }
       } catch (error) {
         setUserInfo(undefined);
-        // console.log({ error });
       } finally {
         setLoading(false);
       }
@@ -81,7 +80,7 @@ function App() {
               </PrivateRoute>
             }
           />
-          <Route path="*" element={<Navigate to="/auth" replace />}></Route>
+          <Route path="*" element={<Navigate to="/auth" replace />} />
         </Routes>
       </BrowserRouter>
     </div>

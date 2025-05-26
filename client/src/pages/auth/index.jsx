@@ -48,26 +48,31 @@ const Auth = () => {
     return true;
   };
 
-  const handleLogin = async () => {
-    if (validateLogin()) {
-      try {
-        const response = await apiClient.post(LOGIN_ROUTE, { email, password });
-        console.log(response);
+const handleLogin = async () => {
+  if (validateLogin()) {
+    try {
+      // yahan email & password bhejo, assume email & password variables defined hain
+      const response = await apiClient.post(LOGIN_ROUTE, { email, password });
+      console.log(response);
 
-        if (response.data.user.id) {
-          setUserInfo(response.data.user);
-          if (response.data.user.profileSetup) {
-            navigate("/chat");
-          } else {
-            navigate("/profile");
-          }
+      if (response?.data?.user?.id) {
+        setUserInfo(response.data.user);
+        if (response.data.user.profileSetup) {
+          navigate("/chat");
+        } else {
+          navigate("/profile");
         }
-      } catch (error) {
-        toast.error("Login failed. Check your credentials.");
-        console.error("Login error:", error);
+      } else {
+        // Agar user id nahi mili response me
+        toast.error("Invalid login response");
       }
+    } catch (error) {
+      toast.error("Login failed. Check your credentials.");
+      console.error("Login error:", error);
     }
-  };
+  }
+};
+
 
   const handleSignup = async () => {
     if (validateSignup()) {
